@@ -702,6 +702,8 @@ class VectorStyleRenderer {
 
     const renderInstructions = this.generateRenderInstructionsFromFeatures_(featuresBatch, transform);
 
+    const label = `generateBuffersForType2_-${Date.now()}`;
+    console.time(label);
 
     const polygonBuffers = this.generateWebGLBuffersFromInstructions_(
           renderInstructions.polygonInstructions,
@@ -717,6 +719,7 @@ class VectorStyleRenderer {
 
 
     const invertVerticesTransform = makeInverseTransform(createTransform(), transform);
+    console.timeEnd(label);
     
     return {
       polygonBuffers: polygonBuffers,
@@ -839,18 +842,19 @@ export function convertStyleToShaders(style, variables) {
         }
       }
 
+      //kmg
       let featureFilter = null;
       let contextFilter = null;
       if (rule.filter) {
         previousFilters.push(rule.filter);
-
+        //kmg
         const { featureFilters, contextFilters } = splitFilters(rule.filter);
         featureFilter = computeFeatureFilter(featureFilters);
         contextFilter = computeContextFilter(contextFilters);        
       }
       // parse each style and convert to shader
       const styleShaders = ruleStyles.map((style) =>
-        ({
+        ({//kmg
           ...parseLiteralStyle(style, variables, currentFilter),
           ...(featureFilter && {featureFilter}), 
           ...(contextFilter && {contextFilter}),
@@ -1112,16 +1116,20 @@ function generateLineStringRenderInstructionsFromFeatures(
   
     ++refCounter;
     let offset = 0;
+
+    const customAttrValues = [];
+    const customAttrSize = pushCustomAttributesInRenderInstructionsFromFeatures(
+      customAttrValues,
+      customAttributes,
+      entry,
+      0,
+      refCounter
+    );
   
     for (const end of entry.ends) {
+      for (let i = 0; i < customAttrSize; ++i)
+        renderInstructions[renderIndex++] = customAttrValues[i];
 
-      renderIndex += pushCustomAttributesInRenderInstructionsFromFeatures(
-        renderInstructions,
-        customAttributes,
-        entry,
-        renderIndex,
-        refCounter
-      );
       // vertices count
       renderInstructions[renderIndex++] = (end - offset) / stride;
   
