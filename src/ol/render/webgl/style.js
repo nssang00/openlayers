@@ -562,16 +562,27 @@ function parseStrokeProperties(style, builder, uniforms, context) {
         NumberType,
       );
     }
+
+    let startOffsetExpression = '0.';
+    if ('stroke-pattern-start-offset' in style) {
+      startOffsetExpression = expressionToGlsl(
+        context,
+        style['stroke-pattern-start-offset'],
+        NumberType,
+      );
+    }    
     context.functions['sampleStrokePattern'] =
-      `vec4 sampleStrokePattern(sampler2D texture, vec2 textureSize, vec2 textureOffset, vec2 sampleSize, float spacingPx, float currentLengthPx, float currentRadiusRatio, float lineWidth) {
-  float currentLengthScaled = currentLengthPx * sampleSize.y / lineWidth;
-  float spacingScaled = spacingPx * sampleSize.y / lineWidth;
-  float uCoordPx = mod(currentLengthScaled, (sampleSize.x + spacingScaled));
-  // make sure that we're not sampling too close to the borders to avoid interpolation with outside pixels
-  uCoordPx = clamp(uCoordPx, 0.5, sampleSize.x - 0.5);
-  float vCoordPx = (-currentRadiusRatio * 0.5 + 0.5) * sampleSize.y;
-  vec2 texCoord = (vec2(uCoordPx, vCoordPx) + textureOffset) / textureSize;
-  return texture2D(texture, texCoord);
+      `vec4 sampleStrokePattern(sampler2D texture, vec2 textureSize, vec2 textureOffset, vec2 sampleSize, float spacingPx, float startOffsetPx, float currentLengthPx, float currentRadiusRatio, float lineWidth) {
+    float scaleFactor = sampleSize.y / lineWidth;
+    float currentLengthScaled = currentLengthPx * scaleFactor;
+    float spacingScaled = max(spacingPx * scaleFactor, sampleSize.x);
+    float uCoordPx = mod(currentLengthScaled - startOffsetPx * scaleFactor + sampleSize.x, spacingScaled);
+    // make sure that we're not sampling too close to the borders to avoid interpolation with outside pixels
+    uCoordPx = clamp(uCoordPx, 0.5, sampleSize.x - 0.5);
+    if (uCoordPx > sampleSize.x - 1.0) return vec4(0.0);
+    float vCoordPx = (0.5 - 0.5 * currentRadiusRatio) * sampleSize.y;
+    vec2  texCoord = (vec2(uCoordPx, vCoordPx) + textureOffset) / textureSize; 
+    return texture2D(texture, texCoord);
 }`;
     const textureName = `u_texture${textureId}`;
     let tintExpression = '1.';
@@ -579,7 +590,7 @@ function parseStrokeProperties(style, builder, uniforms, context) {
       tintExpression = builder.getStrokeColorExpression();
     }
     builder.setStrokeColorExpression(
-      `${tintExpression} * sampleStrokePattern(${textureName}, ${sizeExpression}, ${offsetExpression}, ${sampleSizeExpression}, ${spacingExpression}, currentLengthPx, currentRadiusRatio, v_width)`,
+      `${tintExpression} * sampleStrokePattern(${textureName}, ${sizeExpression}, ${offsetExpression}, ${sampleSizeExpression}, ${spacingExpression}, ${startOffsetExpression}, currentLengthPx, currentRadiusRatio, v_width)`,
     );
   }
 

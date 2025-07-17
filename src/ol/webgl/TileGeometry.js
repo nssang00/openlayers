@@ -81,7 +81,9 @@ class TileGeometry extends BaseTileRepresentation {
       (accumulator, sourceTile) => accumulator.concat(sourceTile.getFeatures()),
       [],
     );
-    this.batch_.addFeatures(features);
+
+    if(this.styleRenderer_.workerEnabled_)
+      this.batch_.addFeatures(features);
 
     const tileOriginX = sourceTiles[0].extent[0];
     const tileOriginY = sourceTiles[0].extent[1];
@@ -91,12 +93,25 @@ class TileGeometry extends BaseTileRepresentation {
       -tileOriginY,
     );
 
-    this.styleRenderer_
+    if(this.styleRenderer_.workerEnabled_)
+    {
+      this.styleRenderer_
       .generateBuffers(this.batch_, transform)
       .then((buffers) => {
         this.buffers = buffers;
         this.setReady();
       });
+    }
+    else
+    {
+      this.styleRenderer_
+      .generateBuffersFromFeatures(features, transform)
+      .then((buffers) => {
+        this.buffers = buffers;
+        this.setReady();
+      });
+    }
+
   }
 
   /**

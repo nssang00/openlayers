@@ -84,6 +84,12 @@ class WebGLVectorTileLayerRenderer extends WebGLBaseTileLayerRenderer {
     this.hitDetectionEnabled_ = !options.disableHitDetection;
 
     /**
+     * @type {boolean}
+     * @private
+     */
+    this.workerEnabled_ = !options.disableWorker;
+
+    /**
      * @type {LayerStyle}
      * @private
      */
@@ -206,6 +212,7 @@ class WebGLVectorTileLayerRenderer extends WebGLBaseTileLayerRenderer {
       this.styleVariables_,
       this.helper,
       this.hitDetectionEnabled_,
+      this.workerEnabled_,
     );
   }
 

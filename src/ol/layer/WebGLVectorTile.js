@@ -84,6 +84,11 @@ class WebGLVectorTileLayer extends BaseTileLayer {
      * @private
      */
     this.hitDetectionDisabled_ = !!options.disableHitDetection;
+
+    /**
+     * @private
+     */
+    this.workerDisabled_ = options.disableWorker ?? false;
   }
 
   /**
@@ -95,6 +100,7 @@ class WebGLVectorTileLayer extends BaseTileLayer {
       variables: this.styleVariables_,
       disableHitDetection: this.hitDetectionDisabled_,
       cacheSize: this.getCacheSize(),
+      disableWorker: this.workerDisabled_,
     });
   }
 
