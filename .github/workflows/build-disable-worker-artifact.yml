@@ -1,0 +1,36 @@
+name: Build disable-worker OL artifact
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Transpile exact disable-worker source
+        run: npm run transpile
+      - name: Record revision
+        shell: bash
+        run: |
+          mkdir -p artifact
+          cp -R build/ol artifact/ol
+          cp package.json artifact/package.json
+          git rev-parse HEAD > artifact/GIT_SHA.txt
+          node -p "require('./package.json').version" > artifact/VERSION.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlayers-disable-worker-runtime
+          path: artifact
+          retention-days: 14
