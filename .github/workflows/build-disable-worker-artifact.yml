@@ -21,12 +21,7 @@ jobs:
       - run: npm ci
       - name: Transpile exact disable-worker source
         run: npm run transpile
-      - name: Record revision
-        shell: bash
-        run: |
-          mkdir -p artifact
-          cp -R build/ol artifact/ol
-          cp package.json artifact/package.json
+      - name: Keep exact runtime dependencies\n        run: npm prune --omit=dev\n      - name: Record revision\n        shell: bash\n        run: |\n          mkdir -p artifact\n          cp -R build/ol artifact/ol\n          cp -R node_modules artifact/node_modules\n          cp package.json artifact/package.json
           git rev-parse HEAD > artifact/GIT_SHA.txt
           node -p "require('./package.json').version" > artifact/VERSION.txt
       - uses: actions/upload-artifact@v4
